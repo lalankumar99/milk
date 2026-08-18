@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MilkTrack - Smart Milk Account</title>
+    <meta name="theme-color" content="#2563eb">
+    <style>
+        /* ==================== CSS VARIABLES & THEME ==================== */
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #0ea5e9;
+            --success: #10b981;
+            --success-bg: #d1fae5;
+            --success-text: #065f46;
+            --danger: #ef4444;
+            --danger-bg: #fee2e2;
+            --danger-text: #991b1b;
+            --warning: #f59e0b;
+            --bg: #f3f4f6;
+            --surface: #ffffff;
+            --text: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius: 16px;
+            --radius-sm: 8px;
+            --transition: all 0.3s ease;
+            --nav-height: 65px;
+            --header-height: 60px;
+            --sidebar-width: 250px;
+        }
+
+        html.dark {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #38bdf8;
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.2);
+            --success-text: #34d399;
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.2);
+            --danger-text: #f87171;
+            --warning: #fbbf24;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ==================== RESET & BASE ==================== */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg); color: var(--text); transition: background-color 0.3s, color 0.3s; overflow-x: hidden; }
+        button { border: none; background: none; cursor: pointer; font-size: inherit; color: inherit; outline: none; }
+        
+        input, select, textarea {
+            width: 100%; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+            background: var(--surface); color: var(--text); font-size: 16px; transition: var(--transition);
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); outline: none; }
+        textarea { resize: vertical; min-height: 80px; }
+
+        /* ==================== LAYOUT ==================== */
+        .app-container { display: flex; height: 100vh; overflow: hidden; }
+
+        /* Header */
+        .header {
+            position: fixed; top: 0; left: 0; right: 0; height: var(--header-height);
+            background: rgba(var(--surface), 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; z-index: 40; background-color: var(--surface);
+        }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.2rem; color: var(--primary); }
+        
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+        .save-indicator {
+            font-size: 0.8rem; font-weight: 600; color: var(--success);
+            opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; gap: 4px;
+        }
+        .save-indicator.show { opacity: 1; }
+
+        .icon-btn {
+            width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            background: var(--bg); color: var(--text); transition: var(--transition);
+        }
+        .icon-btn:hover { background: var(--border); }
+
+        /* Navigation */
+        .nav {
+            background: var(--surface); border-right: 1px solid var(--border); width: var(--sidebar-width);
+            display: flex; flex-direction: column; padding-top: var(--header-height); z-index: 30; transition: var(--transition);
+        }
+        .nav-items { flex: 1; padding: 20px 10px; display: flex; flex-direction: column; gap: 5px; overflow-y: auto; }
+        .nav-item {
+            display: flex; align-items: center; gap: 15px; padding: 12px 20px; border-radius: var(--radius-sm);
+            color: var(--text-muted); font-weight: 500; transition: var(--transition);
+        }
+        .nav-item:hover, .nav-item.active { background: rgba(37, 99, 235, 0.1); color: var(--primary); }
+        .nav-item.active { font-weight: 600; }
+        .nav-item svg { width: 22px; height: 22px; }
+        .nav-item span { font-size: 15px; }
+
+        /* Main Content */
+        .main-content { flex: 1; padding-top: var(--header-height); overflow-y: auto; height: 100vh; }
+        .page-view { display: none; padding: 20px; max-width: 1000px; margin: 0 auto; animation: fadeIn 0.3s ease; padding-bottom: 100px; }
+        .page-view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ==================== COMPONENTS ==================== */
+        .card { background: var(--surface); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 20px; }
+        .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: var(--surface); padding: 15px; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 5px; }
+        .stat-card .label { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+        .stat-card .val { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+        .stat-card.finance-card .val { color: var(--success); }
+
+        /* Buttons */
+        .btn { padding: 12px 20px; border-radius: var(--radius-sm); font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: var(--transition); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-outline { border: 1px solid var(--border); color: var(--text); background: transparent; }
+        .btn-outline:hover { background: var(--bg); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-block { width: 100%; }
+
+        /* Daily Entry Cards */
+        .person-entry-card { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-radius: var(--radius); border: 2px solid var(--border); background: var(--surface); margin-bottom: 12px; transition: var(--transition); }
+        .person-entry-card.taken { border-color: var(--success); background: var(--success-bg); }
+        .person-entry-card.not-taken { border-color: var(--danger); background: var(--danger-bg); }
+        .person-info { display: flex; flex-direction: column; gap: 4px; }
+        .person-name { font-weight: 600; font-size: 1.1rem; }
+        .person-milk-amt { font-size: 0.9rem; color: var(--text-muted); }
+        .entry-actions { display: flex; gap: 10px; }
+        .action-btn { padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem; border: 2px solid transparent; }
+        .btn-mark-taken { background: rgba(16, 185, 129, 0.1); color: var(--success); border-color: var(--success); }
+        .btn-mark-taken.active, .btn-mark-taken:hover { background: var(--success); color: white; }
+        .btn-mark-not { background: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: var(--danger); }
+        .btn-mark-not.active, .btn-mark-not:hover { background: var(--danger); color: white; }
+
+        /* Tables & Calendar */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid var(--border); }
+        th { font-weight: 600; color: var(--text-muted); background: var(--bg); }
+        tr:hover { background: rgba(0,0,0,0.02); }
+        
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+        .cal-day-header { font-weight: 600; color: var(--text-muted); padding: 10px 0; font-size: 0.85rem;}
+        .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); background: var(--bg); cursor: pointer; font-weight: 500; font-size: 1.1rem; border: 1px solid var(--border); }
+        .cal-day:hover { transform: scale(1.05); }
+        .cal-status-complete { background: var(--success-bg); border-color: var(--success); color: var(--success-text); }
+        .cal-status-partial { background: rgba(245, 158, 11, 0.2); border-color: var(--warning); color: #d97706; }
+        .cal-status-none { background: var(--danger-bg); border-color: var(--danger); color: var(--danger-text); }
+
+        /* Utilities */
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; display: inline-block;}
+        .badge-success { background: var(--success-bg); color: var(--success-text); }
+        .badge-danger { background: var(--danger-bg); color: var(--danger-text); }
+        .badge-warning { background: rgba(245, 158, 11, 0.2); color: #d97706; }
+        .badge-info { background: rgba(14, 165, 233, 0.2); color: #0284c7; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .mt-1 { margin-top: 10px; } .mt-2 { margin-top: 20px; } .mb-2 { margin-bottom: 20px; }
+        .d-none { display: none !important; } .text-center { text-align: center; }
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+        .empty-icon { font-size: 3rem; margin-bottom: 15px; display: block; }
+
+        /* ==================== MODALS & TOASTS ==================== */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.3s ease; }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal { background: var(--surface); width: 100%; max-width: 450px; border-radius: var(--radius); padding: 25px; box-shadow: var(--shadow-lg); transform: translateY(20px); transition: transform 0.3s ease; max-height: 90vh; overflow-y: auto; }
+        .modal-overlay.active .modal { transform: translateY(0); }
+        .modal-header { font-size: 1.25rem; font-weight: 600; margin-bottom: 15px; }
+        .modal-body { margin-bottom: 20px; }
+        .modal-footer { display: flex; gap: 10px; justify-content: flex-end; position: sticky; bottom: -25px; background: var(--surface); padding-top: 15px;}
+        
+        .receipt-box { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 20px; background: var(--bg); margin-bottom: 15px; }
+        .receipt-header { text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;}
+        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem;}
+        .receipt-label { color: var(--text-muted); } .receipt-value { font-weight: 600; text-align: right; }
+        .receipt-proof-img { max-width: 100%; border-radius: 8px; margin-top: 10px; }
+
+        #toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: var(--text); color: var(--bg); padding: 12px 24px; border-radius: 30px; font-size: 0.9rem; font-weight: 500; box-shadow: var(--shadow-lg); animation: toastEnter 0.3s ease forwards; }
+        @keyframes toastEnter { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Splash & Overlays */
+        #splash { position: fixed; inset: 0; background: var(--primary); color: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
+        #splash h1 { font-size: 2.5rem; margin-top: 10px; } #splash p { opacity: 0.8; margin-top: 5px; }
+        
+        /* Corrupt Data Overlay */
+        #corruption-overlay { position: fixed; inset: 0; background: var(--surface); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+
+        /* Forms */
+        .form-group { margin-bottom: 15px; } .form-label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; }
+        .toggle-switch { position: relative; width: 50px; height: 26px; display: inline-block; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border); transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(24px); }
+        .rate-hidden .rate-feature { display: none !important; }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 768px) {
+            .app-container { flex-direction: column; }
+            .nav { position: fixed; bottom: 0; left: 0; right: 0; width: 100%; height: 70px; flex-direction: row; padding: 0; border-right: none; border-top: 1px solid var(--border); }
+            .nav-items { flex-direction: row; justify-content: space-around; padding: 0; overflow: visible; align-items: center; }
+            .nav-item { flex-direction: column; gap: 4px; padding: 10px; flex: 1; justify-content: center; border-radius: 0; }
+            .nav-item span { font-size: 11px; } .nav-item.active { background: transparent; border-top: 3px solid var(--primary); }
+            .nav-item[data-target="people"], .nav-item[data-target="calendar"] { display: none; }
+            .header-actions .hide-mobile { display: none; }
+        }
+
+        /* ==================== PRINT ==================== */
+        @media print {
+            body * { visibility: hidden; } #receiptModal, #receiptModal * { visibility: visible; }
+            #receiptModal { position: absolute; left: 0; top: 0; width: 100%; background: white; align-items: flex-start; justify-content: center; }
+            .modal { box-shadow: none; border: none; width: 100%; max-width: 100%; transform: none; } .modal-footer { display: none; }
+        }
+    </style>
+</head>
+<body class="rate-hidden">
+
+    <!-- Splash Screen -->
+    <div id="splash">
+        <span style="font-size: 4rem;">🥛</span><h1>MilkTrack</h1><p>Smart Milk Account</p>
+    </div>
+
+    <!-- Data Corruption Fallback -->
+    <div id="corruption-overlay">
+        <span style="font-size: 3rem; margin-bottom:15px;">⚠️</span>
+        <h2 style="margin-bottom: 10px; color:var(--danger)">Local Data Error</h2>
+        <p style="color:var(--text-muted); margin-bottom:20px; max-width: 400px;">Your local data could not be loaded correctly or is corrupted. Please restore from a backup or reset the application.</p>
+        <div style="display:flex; gap:10px; justify-content: center; flex-wrap:wrap;">
+            <label class="btn btn-primary" style="cursor:pointer;">
+                Import Backup
+                <input type="file" style="display:none;" accept=".json" onchange="importJSON(event, true)">
+            </label>
+            <button class="btn btn-outline" onclick="exportJSON(true)">Export Corrupted Data</button>
+            <button class="btn btn-danger" onclick="hardResetData()">Reset Application</button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="brand"><span>🥛</span> MilkTrack</div>
+            <div class="header-actions">
+                <div id="save-indicator" class="save-indicator">✓ Saved</div>
+                <span style="font-weight: 500; font-size: 0.9rem;" class="hide-mobile">1 Paw = <span id="hdr-paw-size">250</span> ml</span>
+                <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="nav-items">
+                <button class="nav-item active" data-target="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg><span>Home</span></button>
+                <button class="nav-item" data-target="daily"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg><span>Entry</span></button>
+                <button class="nav-item" data-target="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg><span>History</span></button>
+                <button class="nav-item" data-target="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span>Calendar</span></button>
+                <button class="nav-item" data-target="people"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>People</span></button>
+                <button class="nav-item" data-target="reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg><span>Reports</span></button>
+                <button class="nav-item" data-target="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg><span>More</span></button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <div id="view-dashboard" class="page-view active">
+                <h2 style="margin-bottom: 5px;" id="dash-greeting">Good Morning</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;" id="dash-date">August 6, 2026</p>
+
+                <div class="card" id="dash-alert" style="display: none; background: var(--warning); color: white; border: none;">
+                    <div class="flex-between">
+                        <div><strong style="display:block; margin-bottom:5px;">Today's entry incomplete!</strong><span id="dash-alert-text">X of Y people recorded.</span></div>
+                        <button class="btn" style="background: white; color: var(--warning);" onclick="navigate('daily')">Complete</button>
+                    </div>
+                </div>
+
+                <div class="grid-cards">
+                    <div class="stat-card"><span class="label">Total People</span><span class="val" id="dash-people">0</span></div>
+                    <div class="stat-card"><span class="label">Today's Milk (Paw)</span><span class="val" id="dash-today-paw">0</span></div>
+                    <div class="stat-card"><span class="label">Today's Liters</span><span class="val" id="dash-today-l">0.00 L</span></div>
+                    <div class="stat-card"><span class="label">Total Overall Milk</span><span class="val" id="dash-total-l">0.00 L</span></div>
+                </div>
+
+                <h3 class="card-title rate-feature mt-2">Financial Overview</h3>
+                <div class="grid-cards rate-feature">
+                    <div class="stat-card finance-card"><span class="label">Total Milk Cost</span><span class="val" id="dash-total-cost">₹0</span></div>
+                    <div class="stat-card finance-card"><span class="label">Total Paid</span><span class="val" style="color:var(--secondary);" id="dash-total-paid">₹0</span></div>
+                    <div class="stat-card finance-card"><span class="label">Total Remaining (Due)</span><span class="val" style="color:var(--danger);" id="dash-total-rem">₹0</span></div>
+                    <div class="stat-card finance-card"><span class="label">Total Advance</span><span class="val" style="color:var(--success);" id="dash-total-adv">₹0</span></div>
+                </div>
+
+                <h3 class="card-title mt-2">Quick Actions</h3>
+                <div class="grid-cards" style="grid-template-columns: 1fr 1fr;">
+                    <button class="btn btn-primary" onclick="navigate('daily')">+ Daily Entry</button>
+                    <button class="btn btn-success" onclick="openPaymentModal()">+ Add Payment</button>
+                    <button class="btn btn-outline" onclick="navigate('people')">Manage People</button>
+                    <button class="btn btn-outline" onclick="navigate('reports')">View Reports</button>
+                </div>
+            </div>
+
+            <!-- Daily Entry View -->
+            <div id="view-daily" class="page-view">
+                <h2 class="card-title mb-2" style="margin: 0;">Daily Milk Entry</h2>
+                <div class="card" style="padding: 15px;"><input type="date" id="daily-date" onchange="renderDailyEntry()"></div>
+                <div class="card">
+                    <div class="flex-between mb-2">
+                        <div>
+                            <div style="font-weight:600; margin-bottom:5px;">Daily Status: <span id="daily-status-badge" class="badge">NONE</span></div>
+                            <div style="font-size:0.9rem; color:var(--text-muted);">Taken: <span id="daily-taken-count">0</span> | Total: <span id="daily-total-l">0 L</span></div>
+                        </div>
+                        <div style="display: flex; gap: 5px; flex-direction: column;">
+                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;" onclick="markAll(true)">Mark All ✓</button>
+                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem; color: var(--danger); border-color: var(--danger);" onclick="markAll(false)">Mark All ✕</button>
+                        </div>
+                    </div>
+                    <hr style="border:none; border-top: 1px solid var(--border); margin: 15px 0;">
+                    <div id="daily-persons-list"></div>
+                </div>
+            </div>
+
+            <!-- History View -->
+            <div id="view-history" class="page-view">
+                <h2 class="card-title">All History</h2>
+                <div class="card">
+                    <div class="flex-between" style="gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <input type="text" id="hist-search" placeholder="Search person, ref or note..." style="flex: 1; min-width: 200px;" oninput="renderHistory()">
+                        <select id="hist-filter" style="width: auto;" onchange="renderHistory()">
+                            <option value="all">All Records</option><option value="taken">Milk Taken</option><option value="not-taken">Milk Not Taken</option><option value="payment">Payments Only</option>
+                        </select>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="hist-table">
+                            <thead><tr><th>Date</th><th>Person</th><th>Type/Status</th><th>Details</th><th>Action</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div id="hist-empty" class="empty-state d-none"><span class="empty-icon">📝</span><p>No records found.</p></div>
+                </div>
+            </div>
+
+            <!-- Calendar View -->
+            <div id="view-calendar" class="page-view">
+                <div class="flex-between mb-2">
+                    <h2 class="card-title" style="margin: 0;" id="cal-month-title">August 2026</h2>
+                    <div><button class="btn btn-outline" style="padding: 8px;" onclick="changeMonth(-1)">←</button><button class="btn btn-outline" style="padding: 8px;" onclick="changeMonth(1)">→</button></div>
+                </div>
+                <div class="card">
+                    <div class="calendar-grid">
+                        <div class="cal-day-header">Sun</div><div class="cal-day-header">Mon</div><div class="cal-day-header">Tue</div>
+                        <div class="cal-day-header">Wed</div><div class="cal-day-header">Thu</div><div class="cal-day-header">Fri</div><div class="cal-day-header">Sat</div>
+                    </div>
+                    <div class="calendar-grid" id="cal-grid"></div>
+                    <div class="mt-2 flex-between" style="font-size: 0.8rem; color: var(--text-muted);">
+                        <span><span style="color:var(--success)">■</span> Complete</span><span><span style="color:var(--warning)">■</span> Partial</span><span><span style="color:var(--danger)">■</span> None</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- People View -->
+            <div id="view-people" class="page-view">
+                <div class="flex-between mb-2">
+                    <h2 class="card-title" style="margin: 0;">Manage People</h2>
+                    <button class="btn btn-primary" onclick="showModal('personModal')">+ Add Person</button>
+                </div>
+                <div id="people-list"></div>
+            </div>
+
+            <!-- Single Person Details View -->
+            <div id="view-person-detail" class="page-view">
+                <button class="btn btn-outline mb-2" onclick="navigate('people')">← Back to People</button>
+                <div class="flex-between mb-2"><h2 class="card-title" style="margin:0;" id="pd-name">Person Name</h2><span id="pd-status-badge"></span></div>
+                <div class="grid-cards">
+                    <div class="stat-card"><span class="label">Milk Taken</span><span class="val" id="pd-taken">0 Paw</span></div>
+                    <div class="stat-card"><span class="label">Quantity</span><span class="val" id="pd-liters">0 L</span></div>
+                    <div class="stat-card rate-feature"><span class="label">Milk Cost</span><span class="val" id="pd-cost">₹0</span></div>
+                    <div class="stat-card rate-feature"><span class="label">Total Paid</span><span class="val" style="color:var(--secondary);" id="pd-paid">₹0</span></div>
+                </div>
+                <div class="card mt-2">
+                    <h3 class="card-title">Recent History</h3>
+                    <div class="table-responsive">
+                        <table id="pd-history-table">
+                            <thead><tr><th>Date</th><th>Type</th><th>Details</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports View -->
+            <div id="view-reports" class="page-view">
+                <h2 class="card-title">Reports & Summary</h2>
+                <div class="card">
+                    <h3 class="card-title" style="font-size: 1rem;">Filter Period</h3>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;"><input type="date" id="rep-start" onchange="generateReport()"><input type="date" id="rep-end" onchange="generateReport()"></div>
+                </div>
+                <div class="grid-cards">
+                    <div class="stat-card"><span class="label">Total Paw</span><span class="val" id="rep-paw">0</span></div>
+                    <div class="stat-card"><span class="label">Total Liters</span><span class="val" id="rep-l">0.00</span></div>
+                    <div class="stat-card rate-feature"><span class="label">Total Cost</span><span class="val" id="rep-cost">₹0</span></div>
+                </div>
+                <div class="card">
+                    <h3 class="card-title" style="font-size: 1rem;">Person-wise Summary</h3>
+                    <div class="table-responsive">
+                        <table id="rep-table"><thead><tr><th>Person</th><th>Taken</th><th>Missed</th><th>Liters</th><th class="rate-feature">Cost</th></tr></thead><tbody></tbody></table>
+                    </div>
+                    <div class="mt-2 text-center"><button class="btn btn-outline" onclick="exportCSV()">Download CSV</button></div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="view-settings" class="page-view">
+                <h2 class="card-title">Settings</h2>
+                
+                <div class="card">
+                    <h3 class="card-title" style="font-size: 1rem; border-bottom: 1px solid var(--border); padding-bottom:10px;">Data & Storage</h3>
+                    <ul style="list-style:none; font-size:0.9rem; color:var(--text-muted); margin-bottom:15px; line-height:1.8;">
+                        <li><strong>Storage:</strong> Local Device (<span style="color:var(--primary)">localStorage</span> + <span style="color:var(--primary)">IndexedDB</span>)</li>
+                        <li><strong>Firebase:</strong> <span id="firebase-status">Connecting...</span></li>
+                        <li><strong>Last Saved:</strong> <span id="set-last-saved">Never</span></li>
+                        <li><strong>Backup System:</strong> Full Offline Export Available</li>
+                    </ul>
+                    <p style="font-size: 0.85rem; color: var(--warning); margin-bottom: 15px;">Your data is permanently stored locally. Firebase is connected and ready for future cloud sync features.</p>
+                    <div style="display: flex; gap: 10px; flex-direction: column;">
+                        <button class="btn btn-primary" onclick="exportJSON()">Export Full Backup (.json)</button>
+                        <label class="btn btn-outline" style="text-align:center; cursor:pointer;">
+                            Restore Backup (.json)
+                            <input type="file" style="display:none;" accept=".json" onchange="importJSON(event)">
+                        </label>
+                        <button class="btn btn-danger mt-1" onclick="triggerReset()">Reset All Data</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title" style="font-size: 1rem; border-bottom: 1px solid var(--border); padding-bottom:10px;">Application Settings</h3>
+                    <div class="form-group mt-2"><label class="form-label">Account Start Date</label><input type="date" id="set-startdate" onchange="saveSettings()"></div>
+                    <div class="form-group"><label class="form-label">Paw Size (ml)</label><input type="number" id="set-pawsize" value="250" onchange="saveSettings()"></div>
+                    <div class="flex-between mt-2 form-group">
+                        <div><label class="form-label" style="margin:0;">Enable Milk Rate</label><small style="color:var(--text-muted)">Calculate cost automatically</small></div>
+                        <label class="toggle-switch"><input type="checkbox" id="set-rate-enable" onchange="saveSettings()"><span class="slider"></span></label>
+                    </div>
+                    <div class="form-group" id="set-rate-div" style="display:none;"><label class="form-label">Rate Per Liter (₹)</label><input type="number" id="set-rate" placeholder="e.g. 60" onchange="saveSettings()"></div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="reasonModal">
+        <div class="modal">
+            <h3 class="modal-header">Why was milk not taken?</h3>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Reason</label>
+                    <select id="rm-reason"><option value="Away">Away</option><option value="Not at Home">Not at Home</option><option value="Not Needed">Not Needed</option><option value="Forgot">Forgot</option><option value="Other">Other</option></select>
+                </div>
+                <div class="form-group"><label class="form-label">Additional Note (Optional)</label><textarea id="rm-note" placeholder="Any extra details..."></textarea></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('reasonModal')">Cancel</button><button class="btn btn-danger" onclick="saveNotTakenReason()">Save Not Taken</button></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal">
+            <h3 class="modal-header">Add Payment</h3>
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">Person</label><select id="pay-person"></select></div>
+                <div class="form-group"><label class="form-label">Amount (₹)</label><input type="number" id="pay-amount" placeholder="Enter amount"></div>
+                <div class="form-group" style="display:flex; gap:10px;">
+                    <div style="flex:1;"><label class="form-label">Date</label><input type="date" id="pay-date"></div>
+                    <div style="flex:1;"><label class="form-label">Time</label><input type="time" id="pay-time"></div>
+                </div>
+                <div class="form-group"><label class="form-label">Method</label><select id="pay-method"><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Bank Transfer">Bank Transfer</option><option value="Other">Other</option></select></div>
+                <div class="form-group"><label class="form-label">Transaction ID / Ref (Optional)</label><input type="text" id="pay-ref" placeholder="Reference code"></div>
+                <div class="form-group"><label class="form-label">Note (Optional)</label><input type="text" id="pay-note" placeholder="Payment note"></div>
+                <div class="form-group">
+                    <label class="form-label">Receipt Proof Image (Optional)</label>
+                    <input type="file" id="pay-proof" accept="image/*" onchange="handleReceiptFile(event)">
+                    <small style="color:var(--text-muted)">Saved securely in browser IndexedDB.</small>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('paymentModal')">Cancel</button><button class="btn btn-success" onclick="processSavePayment()">Save Payment</button></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="receiptModal">
+        <div class="modal">
+            <div class="receipt-box" id="receipt-content">
+                <div class="receipt-header"><h2 style="color:var(--primary); margin-bottom:5px;">MILKTRACK</h2><div style="font-weight:600; letter-spacing:1px; font-size:0.9rem;">PAYMENT RECEIPT</div></div>
+                <div class="receipt-row"><span class="receipt-label">Date</span><span class="receipt-value" id="rcpt-date"></span></div>
+                <div class="receipt-row"><span class="receipt-label">Time</span><span class="receipt-value" id="rcpt-time"></span></div>
+                <div class="receipt-row"><span class="receipt-label">Person</span><span class="receipt-value" id="rcpt-person"></span></div>
+                <div class="receipt-row"><span class="receipt-label">Amount Paid</span><span class="receipt-value" style="font-size:1.1rem; color:var(--success);">₹<span id="rcpt-amount"></span></span></div>
+                <div class="receipt-row"><span class="receipt-label">Method</span><span class="receipt-value" id="rcpt-method"></span></div>
+                <div class="receipt-row"><span class="receipt-label">Reference</span><span class="receipt-value" id="rcpt-ref"></span></div>
+                <div class="receipt-row"><span class="receipt-label">Note</span><span class="receipt-value" id="rcpt-note"></span></div>
+                <div id="rcpt-proof-container" style="margin-top:15px; display:none; text-align:center; border-top:1px solid var(--border); padding-top:10px;">
+                    <span class="receipt-label" style="display:block; margin-bottom:5px;">Proof of Payment</span>
+                    <img id="rcpt-proof-img" class="receipt-proof-img" src="" alt="Receipt Proof">
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('receiptModal')">Close</button><button class="btn btn-primary" onclick="window.print()">Print Receipt</button></div>
+        </div>
+    </div>
+
+    <!-- Person / Confirm Modals -->
+    <div class="modal-overlay" id="personModal"><div class="modal"><h3 class="modal-header" id="pm-title">Add Person</h3><div class="modal-body"><input type="hidden" id="pm-id"><div class="form-group"><label class="form-label">Name</label><input type="text" id="pm-name"></div><div class="form-group flex-between" id="pm-status-group" style="display:none;"><label class="form-label" style="margin:0;">Active Status</label><label class="toggle-switch"><input type="checkbox" id="pm-active" checked><span class="slider"></span></label></div></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('personModal')">Cancel</button><button class="btn btn-primary" onclick="savePerson()">Save</button></div></div></div>
+    <div class="modal-overlay" id="confirmModal"><div class="modal"><h3 class="modal-header" id="cm-title">Confirm</h3><div class="modal-body"><p id="cm-msg">Are you sure?</p></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('confirmModal')">Cancel</button><button class="btn btn-danger" id="cm-btn">Confirm</button></div></div></div>
+    <div id="toast-container"></div>
+
+    <!-- Firebase SDK Integration via JS Modules -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // User Provided Config
+        let firebaseConfig = {
+            apiKey: "AIzaSyCV6kBgz1LAYVc_j8PflKUIlJN_Hy98kok",
+            authDomain: "milk-d4fb1.firebaseapp.com",
+            projectId: "milk-d4fb1",
+            storageBucket: "milk-d4fb1.firebasestorage.app",
+            messagingSenderId: "668708534429",
+            appId: "1:668708534429:web:744ee0676225b289607c74",
+            measurementId: "G-920E15GXZE"
+        };
+
+        // Environment fallback for immersive environments to avoid execution errors
+        if (typeof __firebase_config !== 'undefined') {
+            firebaseConfig = JSON.parse(__firebase_config);
+        }
+
+        const fbApp = initializeApp(firebaseConfig);
+        const fbAuth = getAuth(fbApp);
+        const fbDb = getFirestore(fbApp);
+        
+        // Expose Firebase variables globally for future cloud data storage integration
+        window.fbApp = fbApp;
+        window.fbAuth = fbAuth;
+        window.fbDb = fbDb;
+
+        async function initFirebase() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(fbAuth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(fbAuth);
+                }
+            } catch (error) {
+                console.error("Firebase Auth Error:", error);
+                const statusEl = document.getElementById('firebase-status');
+                if(statusEl) statusEl.innerHTML = `<span style="color:var(--danger)">Connection Failed</span>`;
+            }
+        }
+
+        onAuthStateChanged(fbAuth, (user) => {
+            const statusEl = document.getElementById('firebase-status');
+            if (user) {
+                console.log("Firebase Connected Successfully. Ready for future storage. User ID:", user.uid);
+                if(statusEl) statusEl.innerHTML = `<span style="color:var(--success)">Connected & Ready (UID: ${user.uid.substring(0,6)}...)</span>`;
+            } else {
+                if(statusEl) statusEl.innerHTML = `<span style="color:var(--warning)">Disconnected</span>`;
+            }
+        });
+
+        /* ==================== EXISTING CONFIG & STATE ==================== */
+        const DB_KEY = 'milkTrackData';
+        const IDB_NAME = 'MilkTrackDB';
+        const IDB_STORE = 'receipts';
+        const DB_VERSION = 1;
+        
+        let db = {
+            dataVersion: DB_VERSION,
+            lastSavedAt: null,
+            settings: { startDate: '2026-08-06', pawSize: 250, rateEnabled: false, ratePerLiter: 60, theme: 'system' },
+            people: [],
+            entries: {},   
+            payments: []   
+        };
+
+        let currentView = 'dashboard';
+        let calCurrentDate = new Date();
+        let tempReasonData = null; 
+        let tempProofBase64 = ''; 
+        let activeDetailPersonId = null;
+
+        /* ==================== INDEXED-DB (FOR LARGE RECEIPTS) ==================== */
+        function openIDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(IDB_NAME, 1);
+                req.onupgradeneeded = (e) => {
+                    const idb = e.target.result;
+                    if(!idb.objectStoreNames.contains(IDB_STORE)) idb.createObjectStore(IDB_STORE, { keyPath: 'paymentId' });
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+        async function saveReceiptToIDB(paymentId, base64Data) {
+            if(!base64Data) return;
+            const idb = await openIDB();
+            return new Promise((resolve, reject) => {
+                const tx = idb.transaction(IDB_STORE, 'readwrite');
+                tx.objectStore(IDB_STORE).put({ paymentId, data: base64Data });
+                tx.oncomplete = resolve; tx.onerror = reject;
+            });
+        }
+        async function getReceiptFromIDB(paymentId) {
+            const idb = await openIDB();
+            return new Promise((resolve) => {
+                const tx = idb.transaction(IDB_STORE, 'readonly');
+                const req = tx.objectStore(IDB_STORE).get(paymentId);
+                req.onsuccess = () => resolve(req.result ? req.result.data : null);
+                req.onerror = () => resolve(null);
+            });
+        }
+        async function deleteReceiptFromIDB(paymentId) {
+            const idb = await openIDB();
+            return new Promise((resolve) => {
+                const tx = idb.transaction(IDB_STORE, 'readwrite');
+                tx.objectStore(IDB_STORE).delete(paymentId);
+                tx.oncomplete = resolve;
+            });
+        }
+        async function getAllReceiptsIDB() {
+            const idb = await openIDB();
+            return new Promise((resolve) => {
+                const tx = idb.transaction(IDB_STORE, 'readonly');
+                const req = tx.objectStore(IDB_STORE).getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => resolve([]);
+            });
+        }
+        async function clearAllReceiptsIDB() {
+            const idb = await openIDB();
+            return new Promise((resolve) => {
+                const tx = idb.transaction(IDB_STORE, 'readwrite');
+                tx.objectStore(IDB_STORE).clear();
+                tx.oncomplete = resolve;
+            });
+        }
+
+        /* ==================== LOCAL STORAGE ARCHITECTURE ==================== */
+        function triggerAutoSave() {
+            db.lastSavedAt = new Date().getTime();
+            try {
+                localStorage.setItem(DB_KEY, JSON.stringify(db));
+                updateLastSavedUI();
+                showSaveIndicator();
+            } catch(e) {
+                console.error("Storage quota exceeded or disabled", e);
+                showToast("Failed to save! Storage limit reached.", "danger");
+            }
+        }
+
+        function loadData() {
+            const raw = localStorage.getItem(DB_KEY);
+            if (!raw) {
+                db.people = [
+                    { id: generateId(), name: 'Lalan', active: true },
+                    { id: generateId(), name: 'Bablu', active: true },
+                    { id: generateId(), name: 'Ashish', active: true },
+                    { id: generateId(), name: 'Roshan', active: true }
+                ];
+                triggerAutoSave();
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(raw);
+                if(parsed) {
+                    db = { ...db, ...parsed };
+                    if(!db.payments) db.payments = [];
+                    if(!db.entries) db.entries = {};
+                    if(!db.dataVersion) db.dataVersion = DB_VERSION;
+                }
+            } catch(e) {
+                console.error("Local Data Corruption Detected", e);
+                document.getElementById('corruption-overlay').style.display = 'flex';
+                throw new Error("Corrupted local storage data.");
+            }
+        }
+
+        /* ==================== APP INITIALIZATION & UTILS ==================== */
+        function init() {
+            try {
+                initFirebase(); // CONNECT FIREBASE
+                loadData();
+                applyTheme(db.settings.theme);
+                
+                document.querySelectorAll('.nav-item').forEach(btn => btn.addEventListener('click', (e) => navigate(e.currentTarget.getAttribute('data-target'))));
+                
+                document.getElementById('daily-date').value = getToday();
+                updateSettingsInputs();
+                updateLastSavedUI();
+
+                setTimeout(() => { const splash = document.getElementById('splash'); splash.style.opacity = '0'; setTimeout(() => splash.remove(), 500); }, 600);
+                navigate('dashboard');
+            } catch(e) {}
+        }
+
+        function getToday() { const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; }
+        function getCurrentTime() { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
+        function formatDate(dStr) { return new Date(dStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); }
+        function formatTime(tStr) { const [h, m] = tStr.split(':'); const d = new Date(); d.setHours(h, m); return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }); }
+        function generateId() { return 'id_' + Math.random().toString(36).substr(2, 9); }
+        
+        function showSaveIndicator() {
+            const ind = document.getElementById('save-indicator');
+            ind.classList.add('show');
+            setTimeout(() => ind.classList.remove('show'), 2000);
+        }
+        
+        function updateLastSavedUI() {
+            if(!db.lastSavedAt) return;
+            const d = new Date(db.lastSavedAt);
+            const str = `${d.toLocaleDateString('en-GB')} ${d.toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit',hour12:true})}`;
+            document.getElementById('set-last-saved').innerText = str;
+        }
+
+        function showToast(msg, type='success') {
+            const c = document.getElementById('toast-container'); const t = document.createElement('div');
+            t.className = `toast`; t.innerText = msg; c.appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+        }
+
+        function showModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function confirmAction(msg, actionStr, btnClass="btn-danger") {
+            document.getElementById('cm-msg').innerText = msg; const btn = document.getElementById('cm-btn');
+            btn.className = `btn ${btnClass}`; btn.innerText = actionStr;
+            btn.onclick = () => { window.currentConfirmAction(); closeModal('confirmModal'); };
+            showModal('confirmModal');
+        }
+
+        function applyTheme(theme) {
+            const h = document.documentElement;
+            if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) h.classList.add('dark'); 
+            else h.classList.remove('dark');
+        }
+        function toggleTheme() {
+            const h = document.documentElement; h.classList.toggle('dark');
+            db.settings.theme = h.classList.contains('dark') ? 'dark' : 'light';
+            triggerAutoSave(); showToast('Theme saved');
+        }
+
+        /* ==================== NAVIGATION & UPDATES ==================== */
+        function navigate(viewId) {
+            document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            const navBtn = document.querySelector(`.nav-item[data-target="${viewId}"]`);
+            if(navBtn) navBtn.classList.add('active');
+            
+            currentView = viewId;
+            updateGlobalUI();
+
+            if(viewId==='dashboard') renderDashboard(); if(viewId==='daily') renderDailyEntry();
+            if(viewId==='people') renderPeople(); if(viewId==='history') renderHistory();
+            if(viewId==='calendar') renderCalendar(); if(viewId==='reports') renderReports();
+            if(viewId==='settings') updateSettingsInputs();
+            window.scrollTo(0, 0);
+        }
+
+        function updateGlobalUI() {
+            document.getElementById('hdr-paw-size').innerText = db.settings.pawSize;
+            if(db.settings.rateEnabled) document.body.classList.remove('rate-hidden'); else document.body.classList.add('rate-hidden');
+            document.getElementById('set-rate-div').style.display = db.settings.rateEnabled ? 'block' : 'none';
+        }
+
+        function getPerson(id) { return db.people.find(p => p.id === id); }
+        function getActivePeople() { return db.people.filter(p => p.active); }
+        function calculateLiters(pawCount) { return (pawCount * db.settings.pawSize) / 1000; }
+        function getPersonFinancials(pId) {
+            let t = 0;
+            Object.keys(db.entries).forEach(d => { if(db.entries[d][pId] && db.entries[d][pId].status === 'taken') t++; });
+            const l = calculateLiters(t); const cost = l * (db.settings.ratePerLiter || 0);
+            const paid = db.payments.filter(p => p.personId === pId).reduce((s, p) => s + Number(p.amount), 0);
+            return { taken: t, liters: l, cost, paid, rem: cost - paid };
+        }
+
+        /* ==================== RENDERERS ==================== */
+        function renderDashboard() {
+            const today = getToday(); const hr = new Date().getHours();
+            document.getElementById('dash-greeting').innerText = hr < 12 ? 'Good Morning' : hr < 18 ? 'Good Afternoon' : 'Good Evening';
+            document.getElementById('dash-date').innerText = formatDate(today);
+            const activeP = getActivePeople(); document.getElementById('dash-people').innerText = activeP.length;
+
+            let tPaw = 0, rec = 0, gPaw = 0;
+            if (db.entries[today]) Object.values(db.entries[today]).forEach(e => { rec++; if(e.status==='taken') tPaw++; });
+            document.getElementById('dash-today-paw').innerText = tPaw;
+            document.getElementById('dash-today-l').innerText = calculateLiters(tPaw).toFixed(2) + ' L';
+
+            const alertBox = document.getElementById('dash-alert');
+            if (rec < activeP.length) { alertBox.style.display = 'block'; document.getElementById('dash-alert-text').innerText = `${rec} of ${activeP.length} people recorded today.`; } else alertBox.style.display = 'none';
+
+            Object.values(db.entries).forEach(day => Object.values(day).forEach(e => { if(e.status==='taken') gPaw++; }));
+            document.getElementById('dash-total-l').innerText = calculateLiters(gPaw).toFixed(2) + ' L';
+
+            let gCost=0, gPaid=0, gRem=0, gAdv=0;
+            db.people.forEach(p => { const f = getPersonFinancials(p.id); gCost+=f.cost; gPaid+=f.paid; if(f.rem>0) gRem+=f.rem; else gAdv+=Math.abs(f.rem); });
+            document.getElementById('dash-total-cost').innerText = '₹'+gCost.toFixed(0); document.getElementById('dash-total-paid').innerText = '₹'+gPaid.toFixed(0);
+            document.getElementById('dash-total-rem').innerText = '₹'+gRem.toFixed(0); document.getElementById('dash-total-adv').innerText = '₹'+gAdv.toFixed(0);
+        }
+
+        function renderDailyEntry() {
+            const dStr = document.getElementById('daily-date').value;
+            if (new Date(dStr) < new Date(db.settings.startDate)) { document.getElementById('daily-date').value = db.settings.startDate; return renderDailyEntry(); }
+            const listEl = document.getElementById('daily-persons-list'); listEl.innerHTML = '';
+            const dayData = db.entries[dStr] || {};
+            const peopleToShow = [...getActivePeople()];
+            db.people.forEach(p => { if (!p.active && dayData[p.id]) peopleToShow.push(p); });
+
+            let tCount = 0, rCount = 0;
+            if (peopleToShow.length === 0) listEl.innerHTML = '<div class="empty-state">No active people found.</div>';
+
+            peopleToShow.forEach(p => {
+                const entry = dayData[p.id]; const stat = entry ? entry.status : null;
+                if(stat) rCount++; if(stat === 'taken') tCount++;
+                let display = stat==='taken' ? `1 Paw • ${db.settings.pawSize} ml` : (stat==='not-taken' ? `Reason: ${entry.reason}` : 'No entry');
+                const card = document.createElement('div'); card.className = `person-entry-card ${stat||''}`;
+                card.innerHTML = `
+                    <div class="person-info"><span class="person-name">${p.name} ${!p.active?'(Inactive)':''}</span><span class="person-milk-amt">${display}</span></div>
+                    <div class="entry-actions">
+                        <button class="action-btn btn-mark-taken ${stat==='taken'?'active':''}" onclick="attemptSetStatus('${dStr}','${p.id}','taken')">✓ Taken</button>
+                        <button class="action-btn btn-mark-not ${stat==='not-taken'?'active':''}" onclick="attemptSetStatus('${dStr}','${p.id}','not-taken')">✕ Not</button>
+                    </div>`;
+                listEl.appendChild(card);
+            });
+
+            document.getElementById('daily-taken-count').innerText = tCount; document.getElementById('daily-total-l').innerText = calculateLiters(tCount).toFixed(2) + ' L';
+            const badge = document.getElementById('daily-status-badge');
+            if (rCount === 0) { badge.innerText = 'NONE'; badge.className = 'badge badge-danger'; }
+            else if (tCount === peopleToShow.length) { badge.innerText = 'COMPLETE'; badge.className = 'badge badge-success'; }
+            else if (rCount === peopleToShow.length && tCount === 0) { badge.innerText = 'COMPLETE (0)'; badge.className = 'badge badge-warning'; }
+            else { badge.innerText = 'PARTIAL'; badge.className = 'badge badge-warning'; }
+        }
+
+        function attemptSetStatus(dateStr, personId, status) {
+            if (navigator.vibrate) navigator.vibrate(50);
+            if(status === 'not-taken') {
+                tempReasonData = { dateStr, personId, isAll: false };
+                document.getElementById('rm-reason').value = 'Away'; document.getElementById('rm-note').value = '';
+                showModal('reasonModal');
+            } else commitMilkStatus(dateStr, personId, 'taken', '', '');
+        }
+
+        function markAll(isTaken) {
+            const dStr = document.getElementById('daily-date').value;
+            if(isTaken) {
+                window.currentConfirmAction = () => { getActivePeople().forEach(p => commitMilkStatus(dStr, p.id, 'taken', '', '')); };
+                confirmAction(`Mark all active people as Taken for ${formatDate(dStr)}?`, 'Mark All', 'btn-success');
+            } else {
+                tempReasonData = { dateStr: dStr, isAll: true }; document.getElementById('rm-reason').value = 'Away'; document.getElementById('rm-note').value = ''; showModal('reasonModal');
+            }
+        }
+        function saveNotTakenReason() {
+            const r = document.getElementById('rm-reason').value, n = document.getElementById('rm-note').value;
+            if(!tempReasonData) return;
+            if(tempReasonData.isAll) getActivePeople().forEach(p => commitMilkStatus(tempReasonData.dateStr, p.id, 'not-taken', r, n));
+            else commitMilkStatus(tempReasonData.dateStr, tempReasonData.personId, 'not-taken', r, n);
+            closeModal('reasonModal'); tempReasonData = null;
+        }
+
+        function commitMilkStatus(date, pId, status, reason, note) {
+            if (!db.entries[date]) db.entries[date] = {};
+            db.entries[date][pId] = { status, reason, note };
+            triggerAutoSave(); renderDailyEntry();
+        }
+
+        /* ==================== PAYMENT LOGIC ==================== */
+        function openPaymentModal() {
+            const select = document.getElementById('pay-person'); select.innerHTML = '';
+            db.people.forEach(p => select.appendChild(new Option(p.name, p.id)));
+            document.getElementById('pay-amount').value = ''; document.getElementById('pay-date').value = getToday();
+            document.getElementById('pay-time').value = getCurrentTime(); document.getElementById('pay-method').value = 'Cash';
+            document.getElementById('pay-ref').value = ''; document.getElementById('pay-note').value = ''; document.getElementById('pay-proof').value = '';
+            tempProofBase64 = ''; showModal('paymentModal');
+        }
+
+        function handleReceiptFile(e) {
+            const file = e.target.files[0]; if(!file) return;
+            if(file.size > 2 * 1024 * 1024) { showToast('Image too large. Max 2MB.', 'danger'); e.target.value=''; return; }
+            const reader = new FileReader(); reader.onload = (ev) => tempProofBase64 = ev.target.result; reader.readAsDataURL(file);
+        }
+
+        async function processSavePayment() {
+            const pId = document.getElementById('pay-person').value, amt = document.getElementById('pay-amount').value;
+            if(!pId || !amt || amt <= 0) { showToast('Valid person and amount required', 'danger'); return; }
+            const payId = generateId();
+            const pay = {
+                id: payId, personId: pId, amount: Number(amt),
+                date: document.getElementById('pay-date').value, time: document.getElementById('pay-time').value,
+                method: document.getElementById('pay-method').value, ref: document.getElementById('pay-ref').value,
+                note: document.getElementById('pay-note').value, hasProof: !!tempProofBase64
+            };
+            db.payments.push(pay);
+            triggerAutoSave();
+            if(tempProofBase64) await saveReceiptToIDB(payId, tempProofBase64);
+            
+            showToast('Payment Saved!'); closeModal('paymentModal');
+            if(currentView==='dashboard') renderDashboard(); if(currentView==='history') renderHistory(); if(currentView==='person-detail') renderPersonDetail();
+        }
+
+        async function viewReceipt(payId) {
+            const pay = db.payments.find(p => p.id === payId); if(!pay) return;
+            const person = getPerson(pay.personId);
+            document.getElementById('rcpt-date').innerText = formatDate(pay.date); document.getElementById('rcpt-time').innerText = formatTime(pay.time);
+            document.getElementById('rcpt-person').innerText = person ? person.name : 'Unknown'; document.getElementById('rcpt-amount').innerText = pay.amount;
+            document.getElementById('rcpt-method').innerText = pay.method; document.getElementById('rcpt-ref').innerText = pay.ref || '-'; document.getElementById('rcpt-note').innerText = pay.note || '-';
+            
+            const proofCont = document.getElementById('rcpt-proof-container');
+            if(pay.hasProof) {
+                const imgData = await getReceiptFromIDB(payId);
+                if(imgData) { document.getElementById('rcpt-proof-img').src = imgData; proofCont.style.display = 'block'; } else { proofCont.style.display = 'none'; }
+            } else { proofCont.style.display = 'none'; }
+            showModal('receiptModal');
+        }
+
+        /* ==================== HISTORY & CALENDAR ==================== */
+        function renderHistory() {
+            const q = document.getElementById('hist-search').value.toLowerCase(), filter = document.getElementById('hist-filter').value;
+            const tbody = document.querySelector('#hist-table tbody'); const emptyEl = document.getElementById('hist-empty'); tbody.innerHTML = '';
+            let rows = [];
+            Object.keys(db.entries).forEach(d => Object.keys(db.entries[d]).forEach(pId => {
+                const p = getPerson(pId); if(!p) return; const e = db.entries[d][pId];
+                rows.push({ type: 'milk', date: d, timestamp: new Date(d).getTime(), personName: p.name, status: e.status, pId, details: e.status==='taken'?`1 Paw`:`Reason: ${e.reason} ${e.note?'- '+e.note:''}` });
+            }));
+            db.payments.forEach(pay => {
+                const p = getPerson(pay.personId);
+                rows.push({ type: 'payment', id: pay.id, date: pay.date, timestamp: new Date(`${pay.date}T${pay.time}`).getTime(), personName: p?p.name:'Unknown', status: 'payment', details: `Amount: ₹${pay.amount} | ${pay.method}` });
+            });
+            rows.sort((a,b) => b.timestamp - a.timestamp);
+            rows = rows.filter(r => {
+                const ms = r.personName.toLowerCase().includes(q) || r.details.toLowerCase().includes(q);
+                const mf = filter==='all' ? true : (filter==='payment'? r.type==='payment' : r.status===filter);
+                return ms && mf;
+            });
+
+            if(rows.length===0) { emptyEl.classList.remove('d-none'); document.querySelector('.table-responsive').classList.add('d-none'); }
+            else {
+                emptyEl.classList.add('d-none'); document.querySelector('.table-responsive').classList.remove('d-none');
+                rows.forEach(r => {
+                    const tr = document.createElement('tr');
+                    const badge = r.status==='taken'?'<span class="badge badge-success">Taken ✓</span>':(r.status==='not-taken'?'<span class="badge badge-danger">Not Taken ✕</span>':'<span class="badge badge-info">Payment 💳</span>');
+                    const actionBtn = r.type==='milk' ? `<button class="btn btn-outline" style="padding:4px 8px; font-size:0.8rem; border-color:var(--danger); color:var(--danger)" onclick="deleteMilkEntry('${r.date}','${r.pId}')">Del</button>`
+                        : `<button class="btn btn-outline" style="padding:4px 8px; font-size:0.8rem;" onclick="viewReceipt('${r.id}')">View</button><button class="btn btn-outline mt-1" style="padding:4px 8px; font-size:0.8rem; border-color:var(--danger); color:var(--danger)" onclick="deletePaymentObj('${r.id}')">Del</button>`;
+                    tr.innerHTML = `<td style="font-size:0.9rem;">${formatDate(r.date)}</td><td style="font-weight:500;">${r.personName}</td><td>${badge}</td><td style="font-size:0.9rem;">${r.details}</td><td><div style="display:flex;flex-direction:column;gap:5px;">${actionBtn}</div></td>`;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        function deleteMilkEntry(date, pId) {
+            window.currentConfirmAction = () => { if(db.entries[date] && db.entries[date][pId]) { delete db.entries[date][pId]; if(Object.keys(db.entries[date]).length===0) delete db.entries[date]; triggerAutoSave(); if(currentView==='history') renderHistory(); } };
+            confirmAction('Delete this milk record forever?', 'Delete');
+        }
+        function deletePaymentObj(payId) {
+            window.currentConfirmAction = async () => { db.payments = db.payments.filter(p => p.id !== payId); triggerAutoSave(); await deleteReceiptFromIDB(payId); if(currentView==='history') renderHistory(); };
+            confirmAction('Delete this payment forever?', 'Delete Payment');
+        }
+
+        /* Calendar */
+        function renderCalendar() {
+            const yr = calCurrentDate.getFullYear(); const mo = calCurrentDate.getMonth();
+            document.getElementById('cal-month-title').innerText = calCurrentDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            const grid = document.getElementById('cal-grid'); grid.innerHTML = '';
+            for(let i=0; i<new Date(yr, mo, 1).getDay(); i++) grid.appendChild(document.createElement('div'));
+            for(let d=1; d<=new Date(yr, mo + 1, 0).getDate(); d++) {
+                const cell = document.createElement('div'); cell.className = 'cal-day'; cell.innerText = d;
+                const dStr = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                if (db.entries[dStr]) {
+                    let tCount = 0, rCount = Object.keys(db.entries[dStr]).length;
+                    Object.values(db.entries[dStr]).forEach(e => { if(e.status==='taken') tCount++; });
+                    if(tCount > 0 && tCount >= getActivePeople().length) cell.classList.add('cal-status-complete'); else if(tCount > 0) cell.classList.add('cal-status-partial'); else if(rCount > 0) cell.classList.add('cal-status-none');
+                }
+                cell.onclick = () => { document.getElementById('daily-date').value = dStr; navigate('daily'); }; grid.appendChild(cell);
+            }
+        }
+        function changeMonth(delta) { calCurrentDate.setMonth(calCurrentDate.getMonth() + delta); renderCalendar(); }
+
+        /* ==================== PEOPLE & REPORTS ==================== */
+        function renderPeople() {
+            const c = document.getElementById('people-list'); c.innerHTML = '';
+            if(db.people.length===0) { c.innerHTML = '<div class="empty-state">No people added yet.</div>'; return; }
+            db.people.forEach(p => {
+                const f = getPersonFinancials(p.id); const card = document.createElement('div'); card.className = 'card'; card.style.opacity = p.active?'1':'0.6';
+                let finHtml = db.settings.rateEnabled ? `<div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border); display:flex; justify-content:space-between; font-size:0.9rem;"><span>Cost: <b>₹${f.cost.toFixed(0)}</b></span><span style="color:var(--secondary)">Paid: <b>₹${f.paid.toFixed(0)}</b></span><span style="color:${f.rem>0?'var(--danger)':'var(--success)'}">${f.rem>0?'Due':'Adv'}: <b>₹${Math.abs(f.rem).toFixed(0)}</b></span></div>` : '';
+                card.innerHTML = `
+                    <div class="flex-between"><div style="font-size: 1.2rem; font-weight:600;">${p.name} ${!p.active?'<span class="badge badge-warning">Inactive</span>':''}</div>
+                    <div style="display:flex; gap:10px;"><button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" onclick="viewPersonDetail('${p.id}')">Profile</button><button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" onclick="editPerson('${p.id}')">Edit</button></div></div>
+                    <div class="grid-cards mt-2" style="margin-bottom:0; grid-template-columns: repeat(2, 1fr);"><div class="stat-card"><span class="label">Taken Days</span><span class="val" style="font-size:1.1rem; color:var(--success);">${f.taken}</span></div><div class="stat-card"><span class="label">Liters</span><span class="val" style="font-size:1.1rem;">${f.liters.toFixed(2)}L</span></div></div>${finHtml}`;
+                c.appendChild(card);
+            });
+        }
+
+        function viewPersonDetail(pId) { activeDetailPersonId = pId; navigate('person-detail'); renderPersonDetail(); }
+        function renderPersonDetail() {
+            const p = getPerson(activeDetailPersonId); if(!p) { navigate('people'); return; }
+            document.getElementById('pd-name').innerText = p.name; document.getElementById('pd-status-badge').innerHTML = p.active?'<span class="badge badge-success">Active</span>':'<span class="badge badge-warning">Inactive</span>';
+            const f = getPersonFinancials(p.id);
+            document.getElementById('pd-taken').innerText = f.taken+' Paw'; document.getElementById('pd-liters').innerText = f.liters.toFixed(2)+' L';
+            document.getElementById('pd-cost').innerText = '₹'+f.cost.toFixed(0); document.getElementById('pd-paid').innerText = '₹'+f.paid.toFixed(0);
+            
+            const tbody = document.querySelector('#pd-history-table tbody'); tbody.innerHTML = ''; let rows = [];
+            Object.keys(db.entries).forEach(d => { if(db.entries[d][p.id]) { const e=db.entries[d][p.id]; rows.push({type:'milk',date:d,time:'00:00',status:e.status,details:e.status==='taken'?'1 Paw':`Missed (${e.reason})`}); } });
+            db.payments.filter(pay => pay.personId===p.id).forEach(pay => rows.push({type:'payment',id:pay.id,date:pay.date,time:pay.time,status:'payment',details:`Paid ₹${pay.amount} via ${pay.method}`}));
+            rows.sort((a,b) => new Date(b.date+'T'+b.time) - new Date(a.date+'T'+a.time));
+            if(rows.length===0) tbody.innerHTML='<tr><td colspan="3" class="text-center">No records.</td></tr>';
+            rows.forEach(r => {
+                const badge = r.type==='milk' ? (r.status==='taken'?'<span style="color:var(--success)">Milk ✓</span>':'<span style="color:var(--danger)">Milk ✕</span>') : '<span style="color:var(--secondary)">Payment 💳</span>';
+                let act = r.type==='payment' ? `<button class="btn btn-outline" style="padding:2px 6px; font-size:0.7rem; margin-left:10px;" onclick="viewReceipt('${r.id}')">View</button>` : '';
+                tbody.innerHTML += `<tr><td style="white-space:nowrap; font-size:0.85rem;">${formatDate(r.date)}</td><td>${badge}</td><td style="font-size:0.85rem;">${r.details} ${act}</td></tr>`;
+            });
+        }
+
+        function savePerson() {
+            const id = document.getElementById('pm-id').value, name = document.getElementById('pm-name').value.trim(), act = document.getElementById('pm-active').checked;
+            if(!name) { showToast('Name required', 'danger'); return; }
+            if(id) { const p=getPerson(id); if(p){p.name=name; p.active=act;} } else db.people.push({id:generateId(), name, active:true});
+            triggerAutoSave(); closeModal('personModal'); renderPeople();
+        }
+        function editPerson(id) {
+            const p=getPerson(id); if(!p) return;
+            document.getElementById('pm-title').innerText='Edit Person'; document.getElementById('pm-id').value=p.id; document.getElementById('pm-name').value=p.name;
+            document.getElementById('pm-status-group').style.display='flex'; document.getElementById('pm-active').checked=p.active; showModal('personModal');
+        }
+
+        function renderReports() {
+            const d = new Date();
+            if(!document.getElementById('rep-start').value) {
+                document.getElementById('rep-start').value = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+                document.getElementById('rep-end').value = new Date(d.getFullYear(), d.getMonth()+1, 0).toISOString().split('T')[0];
+            }
+            generateReport();
+        }
+        function generateReport() {
+            const sD = document.getElementById('rep-start').value, eD = document.getElementById('rep-end').value; if(!sD||!eD) return;
+            let gTaken=0, pStats={}; db.people.forEach(p => pStats[p.id]={name:p.name,t:0,nt:0});
+            Object.keys(db.entries).forEach(d => { if(d>=sD && d<=eD) Object.keys(db.entries[d]).forEach(pId => { if(!pStats[pId]) return; if(db.entries[d][pId].status==='taken') {pStats[pId].t++; gTaken++;} if(db.entries[d][pId].status==='not-taken') pStats[pId].nt++; }); });
+            document.getElementById('rep-paw').innerText=gTaken; const gLiters=calculateLiters(gTaken); document.getElementById('rep-l').innerText=gLiters.toFixed(2)+' L';
+            if(db.settings.rateEnabled) document.getElementById('rep-cost').innerText='₹'+(gLiters*db.settings.ratePerLiter).toFixed(0);
+            const tbody = document.querySelector('#rep-table tbody'); tbody.innerHTML='';
+            Object.values(pStats).forEach(s => { if(s.t===0 && s.nt===0) return; const lit=calculateLiters(s.t); const costHtml=db.settings.rateEnabled?`<td class="rate-feature">₹${(lit*db.settings.ratePerLiter).toFixed(0)}</td>`:''; tbody.innerHTML+=`<tr><td style="font-weight:500;">${s.name}</td><td style="color:var(--success)">${s.t}</td><td style="color:var(--danger)">${s.nt}</td><td>${lit.toFixed(2)}</td>${costHtml}</tr>`; });
+            updateGlobalUI();
+        }
+
+        function exportCSV() {
+            let csv = "Date,Person,Type,Status,Paw,ML,Liter,Amount/Cost,Note\n";
+            Object.keys(db.entries).sort().forEach(d => Object.keys(db.entries[d]).forEach(pId => {
+                const p = getPerson(pId); if(!p) return; const e = db.entries[d][pId];
+                const paw=e.status==='taken'?1:0, ml=paw*db.settings.pawSize, l=ml/1000;
+                csv += `${d},"${p.name}",Milk,${e.status},${paw},${ml},${l},${db.settings.rateEnabled?(l*db.settings.ratePerLiter).toFixed(2):0},"${e.reason||''} ${e.note||''}"\n`;
+            }));
+            db.payments.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(pay => { const p=getPerson(pay.personId); if(p) csv += `${pay.date},"${p.name}",Payment,Completed,0,0,0,-${pay.amount},"${pay.method} Ref:${pay.ref} ${pay.note}"\n`; });
+            const a = document.createElement('a'); a.href = window.URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `milk-report-${getToday()}.csv`; a.click();
+        }
+
+        /* ==================== SYSTEM, SETTINGS & BACKUP ==================== */
+        function updateSettingsInputs() {
+            document.getElementById('set-startdate').value = db.settings.startDate; document.getElementById('set-pawsize').value = db.settings.pawSize;
+            document.getElementById('set-rate-enable').checked = db.settings.rateEnabled; document.getElementById('set-rate').value = db.settings.ratePerLiter;
+        }
+        function saveSettings() {
+            db.settings.startDate = document.getElementById('set-startdate').value; db.settings.pawSize = parseInt(document.getElementById('set-pawsize').value)||250;
+            db.settings.rateEnabled = document.getElementById('set-rate-enable').checked; db.settings.ratePerLiter = parseFloat(document.getElementById('set-rate').value)||0;
+            triggerAutoSave(); updateGlobalUI();
+        }
+
+        async function exportJSON(bypass = false) {
+            try {
+                const receipts = await getAllReceiptsIDB();
+                const exportData = { ...db, _idb_receipts: receipts };
+                const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData)); a.download = `MilkTrack-Backup-${getToday()}.json`; a.click();
+            } catch(e) { if(!bypass) showToast('Export failed', 'danger'); else alert('Export Failed manually.'); }
+        }
+
+        function importJSON(event, bypass = false) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if(parsed.people && parsed.settings) {
+                        const restoreFn = async () => {
+                            if(parsed._idb_receipts) {
+                                await clearAllReceiptsIDB();
+                                for(let r of parsed._idb_receipts) await saveReceiptToIDB(r.paymentId, r.data);
+                                delete parsed._idb_receipts;
+                            }
+                            db = parsed; triggerAutoSave();
+                            if(bypass) location.reload(); else { showToast('Data Restored'); setTimeout(()=>location.reload(), 1000); }
+                        };
+                        if(bypass) restoreFn(); else { window.currentConfirmAction = restoreFn; confirmAction('Replace current local data with this backup?', 'Restore Backup', 'btn-primary'); }
+                    } else showToast('Invalid backup file', 'danger');
+                } catch(err) { showToast('Error reading file', 'danger'); }
+            };
+            reader.readAsText(file);
+        }
+
+        function triggerReset() { window.currentConfirmAction = hardResetData; confirmAction('This will remove all data permanently.', 'Reset Everything'); }
+        async function hardResetData() { localStorage.removeItem(DB_KEY); await clearAllReceiptsIDB(); location.reload(); }
+
+        /* ==================== WINDOW EXPORTS FOR MODULE SCOPE ==================== */
+        window.init = init;
+        window.toggleTheme = toggleTheme;
+        window.navigate = navigate;
+        window.renderDailyEntry = renderDailyEntry;
+        window.markAll = markAll;
+        window.attemptSetStatus = attemptSetStatus;
+        window.saveNotTakenReason = saveNotTakenReason;
+        window.openPaymentModal = openPaymentModal;
+        window.handleReceiptFile = handleReceiptFile;
+        window.processSavePayment = processSavePayment;
+        window.viewReceipt = viewReceipt;
+        window.renderHistory = renderHistory;
+        window.deleteMilkEntry = deleteMilkEntry;
+        window.deletePaymentObj = deletePaymentObj;
+        window.changeMonth = changeMonth;
+        window.showModal = showModal;
+        window.closeModal = closeModal;
+        window.viewPersonDetail = viewPersonDetail;
+        window.editPerson = editPerson;
+        window.savePerson = savePerson;
+        window.generateReport = generateReport;
+        window.exportCSV = exportCSV;
+        window.saveSettings = saveSettings;
+        window.exportJSON = exportJSON;
+        window.importJSON = importJSON;
+        window.triggerReset = triggerReset;
+        window.hardResetData = hardResetData;
+
+        // Startup
+        window.onload = init;
+    </script>
+</body>
+</html>
